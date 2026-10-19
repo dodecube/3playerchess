@@ -16,7 +16,11 @@ let clientKey = localStorage.getItem('thc_clientKey');
 if (!clientKey) { clientKey = uuid(); localStorage.setItem('thc_clientKey', clientKey); }
 $('nameInput').value = localStorage.getItem('thc_name') || '';
 
-const socket = io({ autoConnect: true });
+// Works both at domain root and under a subpath like /chess/ (nginx proxy).
+const basePath = location.pathname.endsWith('/')
+  ? location.pathname.slice(0, -1)
+  : location.pathname.replace(/\/[^/]*$/, '');
+const socket = io({ autoConnect: true, path: basePath + '/socket.io/' });
 
 /* ---------------- app state ---------------- */
 let mode = null;                  // null | 'online' | 'local'
