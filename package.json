@@ -1,0 +1,18 @@
+{
+  "name": "three-half-chess",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Three-player Three Half Chess for playing with friends online or on one screen",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}

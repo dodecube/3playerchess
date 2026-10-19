@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Шахматы на троих — Три полудоски</title>
+  <meta name="description" content="Three Half Chess: шахматы на троих на трёх полудосках. Играйте с друзьями онлайн по ссылке или за одним экраном.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♞</text></svg>">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-piece">♞</span> Шахматы на троих <span class="brand-sub">· три полудоски</span></div>
+  <div class="top-actions">
+    <span id="connStatus" class="conn" title="Состояние соединения">●</span>
+    <a href="https://greenchess.net/rules.php?v=three-half" target="_blank" rel="noopener">Правила на Green Chess ↗</a>
+  </div>
+</header>
+
+<!-- ============ LOBBY / HOME ============ -->
+<main id="homeView" class="home">
+  <section class="hero">
+    <h1>Три игрока. Три полудоски.<br>Каждая пара — обычная доска.</h1>
+    <p>У каждого своя половинка доски 8×4 и обычная армия. Любые две половинки,
+    стыкуясь по центру, образуют доску 8×8 — и фигура может ходить по любой из таких досок:
+    слон с вашей половинки одинаково бьёт и красных, и чёрных.
+    Ходят по очереди: ⚪ Белые → 🔴 Красные → ⚫ Чёрные. Мат одному — партия окончена:
+    поставивший мат получает <b>1</b>, зажатый — <b>0</b>, третий — <b>½</b>.</p>
+  </section>
+
+  <section class="cards">
+    <div class="card">
+      <h2>🌐 Играть онлайн с друзьями</h2>
+      <label>Ваше имя
+        <input id="nameInput" type="text" maxlength="24" placeholder="Например, Вася" autocomplete="name">
+      </label>
+      <button id="createBtn" class="primary">Создать комнату</button>
+      <div class="join-row">
+        <input id="joinCodeInput" type="text" maxlength="5" placeholder="КОД" class="code-input">
+        <button id="joinBtn">Войти по коду</button>
+      </div>
+      <p class="hint">Создайте комнату и отправьте друзьям ссылку-приглашение. Места: ⚪ 🔴 ⚫ + зрители.
+      Тестируете в одиночку? Вкладки одного профиля браузера — один игрок; откройте ссылку ещё в инкогнито и в другом браузере.</p>
+    </div>
+
+    <div class="card">
+      <h2>🛋️ За одним экраном</h2>
+      <label>⚪ Белые <input id="localName0" type="text" maxlength="24" placeholder="Белые"></label>
+      <label>🔴 Красные <input id="localName1" type="text" maxlength="24" placeholder="Красные"></label>
+      <label>⚫ Чёрные <input id="localName2" type="text" maxlength="24" placeholder="Чёрные"></label>
+      <button id="localBtn" class="primary">Играть за одним устройством</button>
+      <p class="hint">Все трое ходят с этого экрана по очереди. Удобно разобраться в правилах.</p>
+    </div>
+  </section>
+
+  <section class="card rules-card">
+    <h2>Как ходить через «шов»</h2>
+    <ul>
+      <li>Кликните фигуру — подсветятся все ходы по <i>обеим</i> собранным доскам с её половинкой, включая ходы на чужие половинки.</li>
+      <li>Верхняя половинка при стыковке поворачивается на 180°, поэтому прямая линия через шов продолжается в <b>зеркальной вертикали</b> (a↔h, b↔g …). Подсветка всё покажет.</li>
+      <li>Пешка идёт от своего края через центр в любую чужую половинку и превращается на её дальнем (домашнем) краю.</li>
+      <li>Нельзя оставлять своего короля под шахом — ни от одного из соперников. Подробности — в панели «Правила» во время партии.</li>
+    </ul>
+  </section>
+</main>
+
+<!-- ============ GAME ============ -->
+<main id="gameView" class="game-layout hidden">
+  <section class="board-area">
+    <div id="statusBanner" class="status-banner">…</div>
+
+    <div class="toolbar">
+      <div class="toolbar-group" role="group" aria-label="Собранная пара половинок">
+        <button data-pair="0,1" class="pair-btn">⚪+🔴</button>
+        <button data-pair="0,2" class="pair-btn">⚪+⚫</button>
+        <button data-pair="1,2" class="pair-btn">🔴+⚫</button>
+        <button id="flipBtn" title="Поменять половинки местами (низ/верх)">⇅ перевернуть</button>
+      </div>
+      <div class="toolbar-group">
+        <button id="stripsBtn" title="Показать все три половинки отдельными полосками">☰ 3 полоски</button>
+        <label class="check"><input type="checkbox" id="autoViewChk" checked> вид за ходящим</label>
+        <label class="check"><input type="checkbox" id="coordsChk" checked> координаты</label>
+      </div>
+    </div>
+
+    <div id="boardHolder"></div>
+    <p class="board-note">Клик по фигуре ходящего игрока — подсветка ходов, клик по клетке — ход.
+    Отдельная полоска внизу — третья половинка: ходы на неё тоже подсвечиваются.</p>
+  </section>
+
+  <aside class="side">
+    <div class="card" id="roomCard">
+      <div class="room-head">
+        <div>
+          <div class="room-label" id="roomLabel">Комната</div>
+          <div class="room-code" id="roomCode">—</div>
+        </div>
+        <div class="room-buttons">
+          <button id="copyLinkBtn">🔗 Ссылка друзьям</button>
+          <button id="leaveBtn">Выйти</button>
+        </div>
+      </div>
+      <div id="playersList"></div>
+      <div id="spectators" class="spectators"></div>
+    </div>
+
+    <div class="card">
+      <div id="proposalBox" class="proposal hidden"></div>
+      <div class="action-row">
+        <button id="startBtn" class="primary">▶ Начать партию</button>
+        <button id="drawBtn">½ Ничья</button>
+        <button id="resignBtn">🏳 Сдаться</button>
+        <button id="claimBtn" class="hidden">↻ Ничья по повторению</button>
+      </div>
+      <p class="hint" id="actionHint"></p>
+    </div>
+
+    <div class="card">
+      <h3>Ходы</h3>
+      <div id="history" class="history"><p class="hint">Партия ещё не началась.</p></div>
+    </div>
+
+    <div class="card" id="chatCard">
+      <h3>Чат комнаты</h3>
+      <div id="chat" class="chat"></div>
+      <form id="chatForm" class="chat-form">
+        <input id="chatInput" type="text" maxlength="300" placeholder="Сообщение…" autocomplete="off">
+        <button type="submit">➤</button>
+      </form>
+    </div>
+
+    <details class="card rules-details">
+      <summary><h3>Правила (кратко)</h3></summary>
+      <ul>
+        <li><b>Доска</b> — три половинки 8×4. Любые две, состыкованные по средней линии (верхняя повёрнута на 180°), дают обычную доску 8×8. Ход допустим, если он допустим хотя бы на одной такой доске с половинкой, где стоит фигура. Фигуры на третьей половинке линию не перекрывают.</li>
+        <li><b>Очередность</b>: Белые → Красные → Чёрные.</li>
+        <li><b>Пешки</b> идут от домашнего края своей половинки через центр в любую чужую половинку; там продолжают к её домашнему краю и на нём превращаются. Двойной ход — с начальной горизонтали своей половинки; взятие на проходе — сразу следующим ходом. Рокировка — как обычно, на своей половинке.</li>
+        <li><b>Шах</b>: нельзя делать ход, после которого ваш король под боем <i>любого</i> соперника, даже если бьющий ходит не следующим.</li>
+        <li><b>Конец партии</b>: если ходящий не может сделать ход и он под шахом — мат: ему 0, тому из шахующих, кто раньше по очередности мог бы взять короля, — 1, третьему — ½. Пат — ничья (всем по ½).</li>
+        <li><b>«Берущийся король»</b>: ход третьего игрока может открыть линию так, что ваш король оказывается под боем игрока, который ходит раньше вас. Тогда партия заканчивается сразу его победой — защититься вы не успеваете.</li>
+        <li><b>Ничья</b>: по соглашению всех троих; по троекратному повторению (требует ходящий); после 50 кругов без хода пешкой и без взятия; если остались одни короли.</li>
+        <li><b>Сдача</b>: сдающийся указывает, в чью пользу сдаётся; третий игрок должен согласиться.</li>
+        <li><b>Свободное место</b>: если за цветом никого нет (или игрок отключился), ход за него может сделать любой участник комнаты — партию можно доиграть или дождаться друга.</li>
+      </ul>
+      <p class="hint">Вариант: Three Half Chess (Green Chess, правила для троих — Uray M. János, 2013; исходная идея — Ralph Betza, ~1980).</p>
+    </details>
+  </aside>
+</main>
+
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 id="modalTitle">Выбор</h3>
+    <div id="modalOptions" class="modal-options"></div>
+    <button id="modalCancel">Отмена</button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="engine.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
